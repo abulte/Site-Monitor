@@ -39,7 +39,8 @@ def generate_email_alerter(to_addrs, from_addr=None, use_gmail=False,
 
         
     def email_alerter(message, subject='You have an alert'):
-        server.sendmail(from_addr, to_addrs, 'To: %s\r\nFrom: %s\r\nSubject: %s\r\n\r\n%s' % (", ".join(to_addrs), from_addr, subject, message))
+        if to_addrs is not None:
+            server.sendmail(from_addr, to_addrs, 'To: %s\r\nFrom: %s\r\nSubject: %s\r\n\r\n%s' % (", ".join(to_addrs), from_addr, subject, message))
 
     return email_alerter, server.quit
 
@@ -48,7 +49,6 @@ def extract_auth_from_url(url):
     if len(url.split('::')) > 1:
         user, password = url.split('::')[1].split(':')
         url = url.split('::')[0]
-        print 'user password' + user + ' ' + password
     return url, user, password
 
 def get_site_status(url):
