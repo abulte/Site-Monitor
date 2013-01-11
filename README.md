@@ -3,9 +3,8 @@
 Modifications to [original](https://github.com/sanbornm/Site-Monitor):
 
 * Use `requests` over `urllib2`
-
 * Specify HTTP basic auth creds with the syntax `url::user:password`
-
+* SQlite history storage support, with `--history` option
 
 ## Usage
 
