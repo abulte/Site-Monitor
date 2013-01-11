@@ -245,14 +245,16 @@ def main():
         import sqlite3
         con = sqlite3.connect('history.db')
         c = con.cursor()
-        c.execute('CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY, url TEXT, status TEXT, using_auth INTEGER)')
+        c.execute('CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY, url TEXT, status TEXT, using_auth INTEGER, \
+            timestamp INTEGER, response_time INTEGER)')
         for url in urls:
             new_url, user, password = extract_auth_from_url(url)
             if user is not None: 
                 using_auth = 1 
             else: 
                 using_auth = 0
-            c.execute('INSERT INTO history VALUES(?, ?, ?, ?)', (None, new_url, pickledata[url]['status'], using_auth))
+            c.execute('INSERT INTO history VALUES(?, ?, ?, ?, ?, ?)', 
+                (None, new_url, pickledata[url]['status'], using_auth, time.time(), pickledata[url]['rtime']))
         con.commit()
         con.close()
 
