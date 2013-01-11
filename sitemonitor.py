@@ -2,11 +2,18 @@
 
 # sample usage: checksites.py eriwen.com nixtutor.com yoursite.org
 
-import pickle, os, sys, logging, time, urllib2, re
+import pickle, os, sys, logging, time, re
 from optparse import OptionParser, OptionValueError
 from smtplib import SMTP
 from getpass import getuser
 from socket import gethostname
+
+try:
+    import requests
+except:
+    print "Please install requests module:"
+    print "$ pip install requests"
+    sys.exit(1)
 
 def generate_email_alerter(to_addrs, from_addr=None, use_gmail=False,
         username=None, password=None, hostname=None, port=25):
@@ -36,10 +43,20 @@ def generate_email_alerter(to_addrs, from_addr=None, use_gmail=False,
 
     return email_alerter, server.quit
 
+def extract_auth_from_url(url):
+    user, password = None, None
+    if len(url.split('::')) > 1:
+        user, password = url.split('::')[1].split(':')
+        url = url.split('::')[0]
+        print 'user password' + user + ' ' + password
+    return url, user, password
+
 def get_site_status(url):
     try:
-        urlfile = urllib2.urlopen(url);
-        status_code = urlfile.code
+        # get auth info from url|user:password
+        url, user, password = extract_auth_from_url(url)
+        urlfile = requests.get(url, auth=(user, password))
+        status_code = urlfile.status_code
         if status_code in (200,302):
             return 'up', urlfile
     except:
@@ -49,7 +66,8 @@ def get_site_status(url):
 def get_headers(url):
     '''Gets all headers from URL request and returns'''
     try:
-        return urllib2.urlopen(url).info().headers
+        url, user, password = extract_auth_from_url(url)
+        return requests.get(url, auth=(user, password)).headers
     except:
         return 'Headers unavailable'
 
@@ -79,7 +97,7 @@ def compare_site_status(prev_results, alerter):
             
         # Save results for later pickling and utility use
         prev_results[url]['status'] = status
-        prev_results[url]['headers'] = None if urlfile == None else urlfile.info().headers 
+        prev_results[url]['headers'] = None if urlfile == None else urlfile.headers 
         prev_results[url]['rtime'] = elapsedTime
 
     return is_status_changed
@@ -129,7 +147,7 @@ def get_urls_from_file(filename):
 
 def get_command_line_options():
     '''Sets up optparse and command line options'''
-    usage = "Usage: %prog [options] url"
+    usage = "Usage: %prog [options] url[::user:password]"
     parser = OptionParser(usage=usage)
     parser.add_option("-t","--log-response-time", action="store_true",
             dest="log_response_time",
