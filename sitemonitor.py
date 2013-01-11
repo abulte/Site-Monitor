@@ -180,6 +180,9 @@ def get_command_line_options():
     parser.add_option("-f","--from-file", dest="from_file",
             help="Import urls from a text file. Separated by newline.")
 
+    parser.add_option("-i","--history", default=False, action="store_true", dest="history",
+            help="Store monitoring history in Sqlite")
+
     return parser.parse_args()
 
 def main():
@@ -237,6 +240,21 @@ def main():
     
     # Store results in pickle file
     store_results(pickle_file, pickledata)
+
+    if options.history:
+        import sqlite3
+        con = sqlite3.connect('history.db')
+        c = con.cursor()
+        c.execute('CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY, url TEXT, status TEXT, using_auth INTEGER)')
+        for url in urls:
+            new_url, user, password = extract_auth_from_url(url)
+            if user is not None: 
+                using_auth = 1 
+            else: 
+                using_auth = 0
+            c.execute('INSERT INTO history VALUES(?, ?, ?, ?)', (None, new_url, pickledata[url]['status'], using_auth))
+        con.commit()
+        con.close()
 
     quiter()
 
